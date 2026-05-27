@@ -1,0 +1,2779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WWII Tunnels - Artifact Catalog V6</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+            background: #e63946;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #fff;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: rgba(230, 57, 70, 0.9);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(230, 57, 70, 0.3);
+        }
+
+        .btn:hover {
+            background: rgba(230, 57, 70, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(230, 57, 70, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-success {
+            background: rgba(76, 175, 80, 0.9);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-success:hover {
+            background: rgba(76, 175, 80, 1);
+        }
+
+        .search-bar {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #e63946;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active {
+            background: #e63946;
+            border-color: #e63946;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stats-bar {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px 25px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            color: #e63946;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .artifact-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .artifact-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(230, 57, 70, 0.3);
+        }
+
+        .artifact-image {
+            width: 100%;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+        }
+
+        .artifact-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .artifact-info {
+            padding: 20px;
+        }
+
+        .artifact-number {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .artifact-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .artifact-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .artifact-location {
+            color: #e63946;
+        }
+
+        .list-view {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .list-item {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .list-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            color: #fff;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .detail-section {
+            margin-bottom: 25px;
+        }
+
+        .detail-label {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .detail-value {
+            color: #fff;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .photo-section {
+            margin-bottom: 25px;
+        }
+
+        .photo-display {
+            width: 100%;
+            max-height: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .photo-display img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .photo-placeholder {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 64px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: #e63946;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .file-upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-area:hover {
+            border-color: #e63946;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .file-upload-area.active {
+            border-color: #e63946;
+            background: rgba(230, 57, 70, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-excellent {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+
+        .status-good {
+            background: rgba(33, 150, 243, 0.2);
+            color: #2196f3;
+        }
+
+        .status-fair {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .status-poor {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .floor-plan-section {
+            margin-top: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .floor-plan-image {
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .floor-plan-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .import-success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid rgba(76, 175, 80, 0.5);
+            color: #4caf50;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .import-error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 2px solid rgba(244, 67, 54, 0.5);
+            color: #f44336;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* ── Sort & Filter Controls ── */
+        .sort-filter-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .sort-label {
+            color: rgba(255,255,255,0.6);
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .sort-select {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: white;
+            padding: 8px 12px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .sort-select:focus { outline: none; border-color: #e63946; }
+        .sort-select option { background: #1a1a2e; color: white; }
+
+        /* ── Detail Modal Tabs ── */
+        .detail-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            padding-bottom: 0;
+        }
+
+        .detail-tab {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.5);
+            padding: 10px 18px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+            border-radius: 6px 6px 0 0;
+        }
+
+        .detail-tab:hover { color: rgba(255,255,255,0.8); }
+
+        .detail-tab.active {
+            color: #e63946;
+            border-bottom-color: #e63946;
+            background: rgba(230,57,70,0.08);
+        }
+
+        /* ── Maintenance Tab ── */
+        .maintenance-section {
+            background: rgba(255,255,255,0.04);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .maintenance-section-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 14px;
+        }
+
+        .maint-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+
+        .maint-status-ok {
+            background: rgba(76,175,80,0.15);
+            color: #4caf50;
+            border: 1px solid rgba(76,175,80,0.3);
+        }
+
+        .maint-status-soon {
+            background: rgba(255,193,7,0.15);
+            color: #ffc107;
+            border: 1px solid rgba(255,193,7,0.3);
+        }
+
+        .maint-status-overdue {
+            background: rgba(244,67,54,0.15);
+            color: #f44336;
+            border: 1px solid rgba(244,67,54,0.3);
+        }
+
+        .maint-status-none {
+            background: rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.5);
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .maint-field-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .maint-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .maint-field-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: rgba(255,255,255,0.45);
+        }
+
+        .maint-field-value {
+            font-size: 14px;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .maint-history-entry {
+            background: rgba(255,255,255,0.04);
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            border-left: 3px solid rgba(230,57,70,0.5);
+        }
+
+        .maint-history-date {
+            font-size: 12px;
+            color: #e63946;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .maint-history-tech {
+            font-size: 12px;
+            color: rgba(255,255,255,0.55);
+            margin-bottom: 5px;
+        }
+
+        .maint-history-notes {
+            font-size: 13px;
+            color: rgba(255,255,255,0.85);
+            line-height: 1.5;
+        }
+
+        .no-maintenance-msg {
+            text-align: center;
+            padding: 30px 20px;
+            color: rgba(255,255,255,0.35);
+        }
+
+        .no-maintenance-msg .no-maint-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        /* ── Log Work Modal ── */
+        .log-work-modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .log-work-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 16px;
+            padding: 28px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+
+        /* ── Maintenance Dashboard Banner ── */
+        .maint-alert-bar {
+            background: rgba(244,67,54,0.12);
+            border: 1px solid rgba(244,67,54,0.35);
+            border-radius: 12px;
+            padding: 14px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .maint-alert-bar:hover { background: rgba(244,67,54,0.18); }
+
+        .maint-alert-bar .alert-text {
+            font-size: 14px;
+            color: #f44336;
+            font-weight: 600;
+        }
+
+        .maint-alert-bar .alert-sub {
+            font-size: 12px;
+            color: rgba(244,67,54,0.7);
+            margin-top: 2px;
+        }
+
+        /* ── Mobile improvements ── */
+        @media (max-width: 768px) {
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 14px;
+            }
+
+            .controls {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .btn {
+                min-height: 44px;
+                font-size: 15px;
+                padding: 10px 16px;
+            }
+
+            .stats-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .search-bar input {
+                font-size: 16px;
+                min-height: 44px;
+            }
+
+            .modal-content {
+                max-width: 100%;
+                max-height: 96vh;
+                margin: 0;
+                border-radius: 16px 16px 0 0;
+                padding: 20px 16px;
+            }
+
+            .modal {
+                align-items: flex-end;
+                padding: 0;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .detail-tab {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+
+            .maint-field-row {
+                grid-template-columns: 1fr;
+            }
+
+            .sort-filter-bar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .artifact-image {
+                height: 140px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .gallery-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            h1 { font-size: 20px; }
+
+            .detail-tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Firebase Configuration - ADD YOUR CONFIG HERE
+        const firebaseConfig = {
+            apiKey: "AIzaSyChvAKKfDCkljNQsrhE57pm4H751EQ",
+            authDomain: "wrighttech-inventory.firebaseapp.com",
+            projectId: "wrighttech-inventory",
+            storageBucket: "wrighttech-inventory.firebasestorage.app",
+            messagingSenderId: "891021456690",
+            appId: "1:891021456690:web:e81d5b7ff36dd3f687532b"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        function App() {
+            const [artifacts, setArtifacts] = useState([]);
+            const [filteredArtifacts, setFilteredArtifacts] = useState([]);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [selectedLocation, setSelectedLocation] = useState('All');
+            const [selectedSite, setSelectedSite] = useState('WWII Tunnels');
+            const [viewMode, setViewMode] = useState('gallery');
+            const [selectedArtifact, setSelectedArtifact] = useState(null);
+            const [showAddModal, setShowAddModal] = useState(false);
+            const [showEditModal, setShowEditModal] = useState(false);
+            const [showFloorPlan, setShowFloorPlan] = useState(false);
+            const [loading, setLoading] = useState(true);
+            const [uploadingPhoto, setUploadingPhoto] = useState(false);
+            const [bulkMode, setBulkMode] = useState(false);
+            const [selectedItems, setSelectedItems] = useState([]);
+            const [showCompactModal, setShowCompactModal] = useState(false);
+            const [showBulkActions, setShowBulkActions] = useState(false);
+            const [sortBy, setSortBy] = useState('itemNumber');
+            const [sortDir, setSortDir] = useState('asc');
+            const [showMaintenanceDashboard, setShowMaintenanceDashboard] = useState(false);
+
+            // Available sites
+            const sites = ['WWII Tunnels', 'City Under Siege', 'Storage/Workshop'];
+
+            // Get unique locations from artifacts of selected site
+            const locations = ['All', ...new Set(
+                artifacts
+                    .filter(a => a.site === selectedSite)
+                    .map(a => a.location?.trim())
+                    .filter(Boolean)
+            )].sort();
+
+            // Load artifacts from Firebase
+            useEffect(() => {
+                const unsubscribe = db.collection('museum_artifacts').onSnapshot(snapshot => {
+                    const artifactsData = [];
+                    snapshot.forEach(doc => {
+                        artifactsData.push({ id: doc.id, ...doc.data() });
+                    });
+                    // Sort by item number
+                    artifactsData.sort((a, b) => (a.itemNumber || 0) - (b.itemNumber || 0));
+                    setArtifacts(artifactsData);
+                    setFilteredArtifacts(artifactsData);
+                    setLoading(false);
+                });
+
+                return () => unsubscribe();
+            }, []);
+
+            // Filter & sort artifacts
+            useEffect(() => {
+                let filtered = artifacts;
+
+                // Filter by site first
+                filtered = filtered.filter(a => a.site === selectedSite);
+
+                if (selectedLocation !== 'All') {
+                    filtered = filtered.filter(a => a.location?.trim() === selectedLocation);
+                }
+
+                if (searchTerm) {
+                    filtered = filtered.filter(a => 
+                        a.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        a.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        a.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        a.donor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        a.itemNumber?.toString().includes(searchTerm)
+                    );
+                }
+
+                // Sort
+                filtered = [...filtered].sort((a, b) => {
+                    let aVal, bVal;
+                    switch (sortBy) {
+                        case 'name':
+                            aVal = a.name?.toLowerCase() || '';
+                            bVal = b.name?.toLowerCase() || '';
+                            break;
+                        case 'location':
+                            aVal = a.location?.toLowerCase() || '';
+                            bVal = b.location?.toLowerCase() || '';
+                            break;
+                        case 'updatedAt':
+                            aVal = a.updatedAt?.toMillis?.() || 0;
+                            bVal = b.updatedAt?.toMillis?.() || 0;
+                            break;
+                        case 'createdAt':
+                            aVal = a.createdAt?.toMillis?.() || 0;
+                            bVal = b.createdAt?.toMillis?.() || 0;
+                            break;
+                        case 'condition':
+                            const condOrder = { 'Excellent': 0, 'Good': 1, 'Fair': 2, 'Poor': 3 };
+                            aVal = condOrder[a.condition] ?? 99;
+                            bVal = condOrder[b.condition] ?? 99;
+                            break;
+                        case 'itemNumber':
+                        default:
+                            aVal = a.itemNumber || 0;
+                            bVal = b.itemNumber || 0;
+                    }
+                    if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+                    if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+                    return 0;
+                });
+
+                setFilteredArtifacts(filtered);
+            }, [searchTerm, selectedLocation, artifacts, selectedSite, sortBy, sortDir]);
+
+            // Compact Numbers - Renumber items sequentially
+            const compactNumbers = async () => {
+                try {
+                    setLoading(true);
+                    const sortedArtifacts = [...artifacts].sort((a, b) => (a.itemNumber || 0) - (b.itemNumber || 0));
+                    const batch = db.batch();
+                    
+                    sortedArtifacts.forEach((artifact, index) => {
+                        const docRef = db.collection('museum_artifacts').doc(artifact.id);
+                        batch.update(docRef, {
+                            itemNumber: index + 1,
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastChange: `Renumbered from #${artifact.itemNumber} to #${index + 1}`
+                        });
+                    });
+
+                    await batch.commit();
+                    alert(`Successfully renumbered ${sortedArtifacts.length} items!`);
+                    setShowCompactModal(false);
+                    setLoading(false);
+                } catch (error) {
+                    console.error('Compact error:', error);
+                    alert('Error compacting numbers');
+                    setLoading(false);
+                }
+            };
+
+            // Export to Excel
+            const exportToExcel = () => {
+                const exportData = artifacts.map(a => ({
+                    'Item Number': a.itemNumber,
+                    'Name': a.name,
+                    'Site': a.site,
+                    'Location': a.location,
+                    'Description': a.description,
+                    'Donor': a.donor,
+                    'Condition': a.condition,
+                    'Condition Notes': a.conditionNotes,
+                    'Last Serviced': a.lastServiced,
+                    'Servicing Details': a.servicingDetails,
+                    'Photos': a.photos?.length || 0,
+                    'Last Updated': a.updatedAt?.toDate?.().toLocaleDateString('en-GB') || 'N/A'
+                }));
+
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Artifacts");
+                XLSX.writeFile(wb, `WWII_Artifacts_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+            };
+
+            // Bulk Delete
+            const bulkDelete = async () => {
+                if (!confirm(`Delete ${selectedItems.length} items? This cannot be undone!`)) return;
+                
+                try {
+                    setLoading(true);
+                    const batch = db.batch();
+                    
+                    selectedItems.forEach(id => {
+                        const docRef = db.collection('museum_artifacts').doc(id);
+                        batch.delete(docRef);
+                    });
+
+                    await batch.commit();
+                    alert(`Deleted ${selectedItems.length} items successfully!`);
+                    setSelectedItems([]);
+                    setBulkMode(false);
+                    setShowBulkActions(false);
+                    setLoading(false);
+                } catch (error) {
+                    console.error('Bulk delete error:', error);
+                    alert('Error deleting items');
+                    setLoading(false);
+                }
+            };
+
+            // Bulk Move Location
+            const bulkMoveLocation = async (newLocation) => {
+                if (!newLocation) return;
+                if (!confirm(`Move ${selectedItems.length} items to "${newLocation}"?`)) return;
+                
+                try {
+                    setLoading(true);
+                    const batch = db.batch();
+                    
+                    selectedItems.forEach(id => {
+                        const docRef = db.collection('museum_artifacts').doc(id);
+                        const artifact = artifacts.find(a => a.id === id);
+                        batch.update(docRef, {
+                            location: newLocation,
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastChange: `Moved from "${artifact.location}" to "${newLocation}"`
+                        });
+                    });
+
+                    await batch.commit();
+                    alert(`Moved ${selectedItems.length} items to ${newLocation}!`);
+                    setSelectedItems([]);
+                    setBulkMode(false);
+                    setShowBulkActions(false);
+                    setLoading(false);
+                } catch (error) {
+                    console.error('Bulk move error:', error);
+                    alert('Error moving items');
+                    setLoading(false);
+                }
+            };
+
+            // Migrate existing artifacts to WWII Tunnels site
+            const migrateToSite = async () => {
+                if (!confirm('This will assign all existing artifacts without a site to "WWII Tunnels". Continue?')) return;
+                
+                try {
+                    setLoading(true);
+                    const artifactsToMigrate = artifacts.filter(a => !a.site);
+                    
+                    if (artifactsToMigrate.length === 0) {
+                        alert('All artifacts already have a site assigned!');
+                        setLoading(false);
+                        return;
+                    }
+
+                    const batch = db.batch();
+                    
+                    artifactsToMigrate.forEach(artifact => {
+                        const docRef = db.collection('museum_artifacts').doc(artifact.id);
+                        batch.update(docRef, {
+                            site: 'WWII Tunnels',
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastChange: 'Assigned to WWII Tunnels site'
+                        });
+                    });
+
+                    await batch.commit();
+                    alert(`Successfully migrated ${artifactsToMigrate.length} artifacts to WWII Tunnels!`);
+                    setLoading(false);
+                } catch (error) {
+                    console.error('Migration error:', error);
+                    alert('Error during migration');
+                    setLoading(false);
+                }
+            };
+
+            // Upload photo
+            // ── Canvas resize helper ─────────────────────────────────────
+            // Draws an image file onto a canvas at maxWidth/maxHeight, returns a Blob
+            const resizeImage = (file, maxWidth, maxHeight, quality = 0.82) => {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    const objectUrl = URL.createObjectURL(file);
+                    img.onload = () => {
+                        URL.revokeObjectURL(objectUrl);
+                        let { width, height } = img;
+                        // Scale down proportionally
+                        if (width > maxWidth || height > maxHeight) {
+                            const ratio = Math.min(maxWidth / width, maxHeight / height);
+                            width  = Math.round(width  * ratio);
+                            height = Math.round(height * ratio);
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width  = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        canvas.toBlob(blob => {
+                            if (blob) resolve(blob);
+                            else reject(new Error('Canvas toBlob failed'));
+                        }, 'image/jpeg', quality);
+                    };
+                    img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('Image load failed')); };
+                    img.src = objectUrl;
+                });
+            };
+
+            // Upload both a full-res (max 1200px) and a thumbnail (max 400px)
+            // Returns { fullUrl, thumbUrl }
+            const uploadPhoto = async (file, artifactId) => {
+                if (!file) return null;
+                try {
+                    setUploadingPhoto(true);
+                    const timestamp = Date.now();
+                    const baseName  = file.name.replace(/\.[^.]+$/, ''); // strip extension
+                    const storageRef = storage.ref();
+
+                    // Resize to full-res (max 1200×1200) — good quality, much smaller than raw phone photo
+                    const fullBlob  = await withTimeout(resizeImage(file, 1200, 1200, 0.85), 15000, 'resize full');
+                    const thumbBlob = await withTimeout(resizeImage(file, 400,  400,  0.80), 15000, 'resize thumb');
+
+                    // Upload full-res
+                    const fullRef  = storageRef.child(`museum_artifacts/${artifactId}/${timestamp}_${baseName}.jpg`);
+                    await withTimeout(fullRef.put(fullBlob, { contentType: 'image/jpeg' }), 30000, 'upload full');
+                    const fullUrl  = await withTimeout(fullRef.getDownloadURL(), 10000, 'get full URL');
+
+                    // Upload thumbnail into a thumbs/ subfolder
+                    const thumbRef = storageRef.child(`museum_artifacts/${artifactId}/thumbs/${timestamp}_${baseName}_thumb.jpg`);
+                    await withTimeout(thumbRef.put(thumbBlob, { contentType: 'image/jpeg' }), 30000, 'upload thumb');
+                    const thumbUrl = await withTimeout(thumbRef.getDownloadURL(), 10000, 'get thumb URL');
+
+                    setUploadingPhoto(false);
+                    return { fullUrl, thumbUrl };
+                } catch (error) {
+                    console.error('Photo upload error:', error);
+                    setUploadingPhoto(false);
+                    alert('Error uploading photo');
+                    return null;
+                }
+            };
+
+            // ── Reprocess existing photos ────────────────────────────────
+            // Fetches each existing photo URL, converts to a blob, generates a
+            // thumbnail via canvas, uploads it, and saves the thumbUrl to Firestore.
+            const [reprocessing, setReprocessing] = useState(false);
+            const [reprocessProgress, setReprocessProgress] = useState(null);
+            const reprocessPausedRef = React.useRef(false);
+
+            const REPROCESS_KEY = 'wwiitunnels_thumb_progress';
+
+            // Wraps any promise with a timeout — rejects after ms milliseconds
+            const withTimeout = (promise, ms, label) => {
+                const timer = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error(`Timeout after ${ms/1000}s: ${label}`)), ms)
+                );
+                return Promise.race([promise, timer]);
+            };
+
+            const reprocessExistingPhotos = async (retryFailedOnly = false) => {
+                const saved = (() => { try { return JSON.parse(localStorage.getItem(REPROCESS_KEY)); } catch(e) { return null; } })();
+                const hasProgress = saved && saved.completedIds?.length > 0;
+
+                // Count how many artifacts actually have null/missing thumbnails
+                const artifactsWithFailed = artifacts.filter(a =>
+                    a.photos?.length > 0 &&
+                    a.photos.some((_, i) => !a.thumbnails?.[i])
+                );
+
+                if (retryFailedOnly) {
+                    if (artifactsWithFailed.length === 0) {
+                        alert('✅ No failed thumbnails found — all photos have thumbnails!');
+                        return;
+                    }
+                    if (!confirm(`Retry ${artifactsWithFailed.length} artifact${artifactsWithFailed.length > 1 ? 's' : ''} with missing thumbnails?\n\nThis will only process photos that failed or were skipped previously.`)) return;
+                } else if (hasProgress) {
+                    const choice = confirm(`Resume from where you left off?\n\n${saved.completedIds.length} artifacts already processed.\n\nClick OK to resume, Cancel to start fresh.`);
+                    if (choice === false) {
+                        // Start fresh — but ask if they want retry-failed instead
+                        localStorage.removeItem(REPROCESS_KEY);
+                        if (artifactsWithFailed.length > 0) {
+                            const doRetry = confirm(`${artifactsWithFailed.length} artifact${artifactsWithFailed.length > 1 ? 's' : ''} have missing thumbnails.\n\nClick OK to retry only those, Cancel to regenerate everything from scratch.`);
+                            if (doRetry) {
+                                return reprocessExistingPhotos(true);
+                            }
+                        }
+                    }
+                } else {
+                    if (!confirm('Generate thumbnails for all existing photos.\n\nProgress is saved automatically — you can pause and resume at any time.\n\nContinue?')) return;
+                }
+
+                reprocessPausedRef.current = false;
+                setReprocessing(true);
+
+                // ── Fetch FRESH data from Firestore ──────────────────────
+                // Don't trust React state — it may be stale from page load.
+                // Pull the current thumbnails[] directly from Firestore so we
+                // know exactly which slots are genuinely missing.
+                let freshArtifacts = [];
+                try {
+                    const snapshot = await db.collection('museum_artifacts').get();
+                    snapshot.forEach(doc => freshArtifacts.push({ id: doc.id, ...doc.data() }));
+                    console.log(`📦 Fresh data loaded: ${freshArtifacts.length} artifacts`);
+                } catch(e) {
+                    alert('Could not load fresh data from Firebase. Check your connection and try again.');
+                    setReprocessing(false);
+                    return;
+                }
+
+                // Decide which artifacts to process based on mode
+                let toProcess;
+                if (retryFailedOnly) {
+                    toProcess = freshArtifacts.filter(a =>
+                        a.photos?.length > 0 &&
+                        a.photos.some((_, i) => !a.thumbnails?.[i])
+                    );
+                    console.log(`🔁 Retry mode: ${toProcess.length} artifacts with missing thumbnails`);
+                    toProcess.forEach(a => {
+                        const missing = a.photos.filter((_,i) => !a.thumbnails?.[i]).length;
+                        console.log(`  - #${a.itemNumber} ${a.name}: ${missing}/${a.photos.length} photos missing thumbs`);
+                    });
+                    if (toProcess.length === 0) {
+                        setReprocessing(false);
+                        alert('✅ Fresh check complete — all photos already have thumbnails in Firebase!');
+                        return;
+                    }
+                } else {
+                    const allWithPhotos = freshArtifacts.filter(a => a.photos?.length > 0);
+                    const completedSet  = new Set(hasProgress && saved ? saved.completedIds : []);
+                    toProcess = allWithPhotos.filter(a => !completedSet.has(a.id));
+                }
+
+                const completedIds = new Set(
+                    (!retryFailedOnly && hasProgress && saved) ? saved.completedIds : []
+                );
+
+                let done    = retryFailedOnly ? 0 : completedIds.size;
+                let total   = retryFailedOnly ? toProcess.length : freshArtifacts.filter(a => a.photos?.length > 0).length;
+                let fixed   = 0;
+                let failed  = 0;
+
+                setReprocessProgress({ done, total, fixed, failed, paused: false, retryMode: retryFailedOnly });
+
+                for (const artifact of toProcess) {
+                    if (reprocessPausedRef.current) {
+                        setReprocessProgress(p => ({ ...p, paused: true }));
+                        setReprocessing(false);
+                        return;
+                    }
+
+                    // Use fresh data for this artifact (not stale React state)
+                    const freshArtifact = freshArtifacts.find(a => a.id === artifact.id) || artifact;
+
+                    // Build new thumbnails array — keep existing good ones, retry null slots
+                    const newThumbs = [...(freshArtifact.thumbnails || [])];
+                    // Ensure array is same length as photos
+                    while (newThumbs.length < freshArtifact.photos.length) newThumbs.push(null);
+
+                    let artifactChanged = false;
+
+                    for (let idx = 0; idx < freshArtifact.photos.length; idx++) {
+                        // Skip if this slot already has a valid thumbnail
+                        if (newThumbs[idx]) continue;
+
+                        const photoUrl = freshArtifact.photos[idx];
+                        let response = null, blob = null, file = null, thumbBlob = null;
+                        try {
+                            // Use XMLHttpRequest via Firebase Storage ref — bypasses CORS
+                            // fetch() is blocked by Firebase Storage CORS policy on GitHub Pages
+                            blob = await withTimeout(new Promise((resolve, reject) => {
+                                const xhr = new XMLHttpRequest();
+                                xhr.responseType = 'blob';
+                                xhr.onload  = () => xhr.status === 200 ? resolve(xhr.response) : reject(new Error(`XHR status ${xhr.status}`));
+                                xhr.onerror = () => reject(new Error('XHR network error'));
+                                xhr.open('GET', photoUrl);
+                                xhr.send();
+                            }), 20000, 'fetch photo');
+                            file = new File([blob], 'photo.jpg', { type: blob.type || 'image/jpeg' });
+                            blob      = null;
+
+                            thumbBlob = await withTimeout(resizeImage(file, 400, 400, 0.80), 15000, 'resize');
+                            file      = null;
+
+                            const thumbRef = storage.ref().child(
+                                `museum_artifacts/${artifact.id}/thumbs/rp_${Date.now()}_${idx}.jpg`
+                            );
+                            await withTimeout(thumbRef.put(thumbBlob, { contentType: 'image/jpeg' }), 30000, 'upload');
+                            thumbBlob = null;
+
+                            const thumbUrl = await withTimeout(thumbRef.getDownloadURL(), 10000, 'get URL');
+                            newThumbs[idx] = thumbUrl;
+                            artifactChanged = true;
+                            fixed++;
+                        } catch (err) {
+                            const isTimeout = err.message?.startsWith('Timeout');
+                            console.error(`${isTimeout ? '⏱ TIMEOUT' : '✗ FAILED'}: ${artifact.name} photo ${idx} —`, err.message);
+                            failed++;
+                        } finally {
+                            blob = null; file = null; thumbBlob = null;
+                        }
+                    }
+
+                    // Only write to Firestore if something actually changed
+                    if (artifactChanged) {
+                        await db.collection('museum_artifacts').doc(artifact.id).update({
+                            thumbnails: newThumbs,
+                            updatedAt:  firebase.firestore.FieldValue.serverTimestamp(),
+                            lastChange: 'Thumbnails generated'
+                        });
+                    }
+
+                    done++;
+                    completedIds.add(artifact.id);
+
+                    // Save progress (only in full mode, not retry mode)
+                    if (!retryFailedOnly) {
+                        try {
+                            localStorage.setItem(REPROCESS_KEY, JSON.stringify({
+                                completedIds: [...completedIds],
+                                savedAt: new Date().toISOString()
+                            }));
+                        } catch(e) {}
+                    }
+
+                    setReprocessProgress({ done, total, fixed, failed, paused: false, retryMode: retryFailedOnly });
+                    await new Promise(r => setTimeout(r, 500));
+                }
+
+                localStorage.removeItem(REPROCESS_KEY);
+                setReprocessing(false);
+                setReprocessProgress(null);
+
+                if (retryFailedOnly) {
+                    alert(`✅ Retry complete!\n\n${fixed} thumbnails fixed${failed > 0 ? `\n⚠️ ${failed} still failing — these photos may be corrupted or too large` : '\n\nAll previously failed thumbnails are now working!'}`);
+                } else {
+                    alert(`✅ All done!\n\n${done} artifacts processed\n${fixed} thumbnails generated${failed > 0 ? `\n⚠️ ${failed} failed — click "Retry Failed" to try again` : ''}`);
+                }
+            };
+
+            const pauseReprocess = () => {
+                reprocessPausedRef.current = true;
+            };
+
+            // ── Maintenance helpers ──────────────────────────────────────
+            const calcNextDue = (lastDone, frequency, customDays) => {
+                if (!lastDone || frequency === 'One-time') return null;
+                const d = new Date(lastDone);
+                const days = frequency === 'Weekly' ? 7
+                    : frequency === 'Monthly' ? 30
+                    : frequency === 'Yearly' ? 365
+                    : parseInt(customDays) || 0;
+                if (!days) return null;
+                d.setDate(d.getDate() + days);
+                return d.toISOString().split('T')[0];
+            };
+
+            const maintStatus = (nextDue) => {
+                if (!nextDue) return 'none';
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                const due = new Date(nextDue);
+                const diffDays = Math.round((due - today) / 86400000);
+                if (diffDays < 0) return 'overdue';
+                if (diffDays <= 14) return 'soon';
+                return 'ok';
+            };
+
+            const maintStatusLabel = (status, nextDue) => {
+                if (status === 'none') return { icon: '⚪', label: 'No schedule set', cls: 'maint-status-none' };
+                if (status === 'overdue') return { icon: '🔴', label: `Overdue (was due ${nextDue})`, cls: 'maint-status-overdue' };
+                if (status === 'soon') return { icon: '🟡', label: `Due soon (${nextDue})`, cls: 'maint-status-soon' };
+                return { icon: '🟢', label: `Up to date (next: ${nextDue})`, cls: 'maint-status-ok' };
+            };
+
+            const overdueItems = artifacts.filter(a => {
+                const m = a.maintenance;
+                if (!m || !m.nextDue) return false;
+                return maintStatus(m.nextDue) === 'overdue';
+            });
+
+            const dueSoonItems = artifacts.filter(a => {
+                const m = a.maintenance;
+                if (!m || !m.nextDue) return false;
+                return maintStatus(m.nextDue) === 'soon';
+            });
+
+            const ArtifactCard = ({ artifact }) => {
+                const isSelected = selectedItems.includes(artifact.id);
+                
+                return (
+                    <div 
+                        className="artifact-card" 
+                        onClick={() => {
+                            if (bulkMode) {
+                                if (isSelected) {
+                                    setSelectedItems(selectedItems.filter(id => id !== artifact.id));
+                                } else {
+                                    setSelectedItems([...selectedItems, artifact.id]);
+                                }
+                            } else {
+                                setSelectedArtifact(artifact);
+                            }
+                        }}
+                        style={{
+                            border: isSelected ? '3px solid #e63946' : undefined,
+                            opacity: bulkMode && !isSelected ? 0.6 : 1
+                        }}
+                    >
+                        {bulkMode && (
+                            <div style={{
+                                position: 'absolute',
+                                top: '10px',
+                                right: '10px',
+                                background: isSelected ? '#e63946' : 'rgba(255,255,255,0.2)',
+                                width: '30px',
+                                height: '30px',
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: '2px solid white',
+                                zIndex: 10
+                            }}>
+                                {isSelected && '✓'}
+                            </div>
+                        )}
+                        <div className="artifact-image">
+                            {artifact.photos && artifact.photos.length > 0 ? (
+                                <img 
+                                    src={artifact.thumbnails?.[0] || artifact.photos[0]} 
+                                    alt={artifact.name}
+                                    loading="lazy"
+                                />
+                            ) : (
+                                '🏛️'
+                            )}
+                        </div>
+                        <div className="artifact-info">
+                            <div className="artifact-number">Item #{artifact.itemNumber}</div>
+                            <div className="artifact-name">{artifact.name}</div>
+                            <div className="artifact-meta">
+                                <div className="artifact-location">📍 {artifact.location}</div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const ListView = () => (
+                <div className="list-view">
+                    {filteredArtifacts.map(artifact => (
+                        <div key={artifact.id} className="list-item" onClick={() => setSelectedArtifact(artifact)}>
+                            <div>
+                                <div className="artifact-number" style={{marginBottom: '5px'}}>
+                                    Item #{artifact.itemNumber}
+                                </div>
+                                <div className="artifact-name">{artifact.name}</div>
+                                <div className="artifact-meta">
+                                    <span className="artifact-location">{artifact.location}</span>
+                                    {artifact.description && (
+                                        <span style={{color: 'rgba(255,255,255,0.5)', marginLeft: '10px'}}>
+                                            {artifact.description.substring(0, 50)}...
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            <div>→</div>
+                        </div>
+                    ))}
+                </div>
+            );
+
+            const DetailModal = ({ artifact, onClose }) => {
+                if (!artifact) return null;
+
+                const fileInputRef = useRef(null);
+                const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+                const [activeTab, setActiveTab] = useState('details');
+                const [showLogWork, setShowLogWork] = useState(false);
+                const [showSetSchedule, setShowSetSchedule] = useState(false);
+                const [savingMaint, setSavingMaint] = useState(false);
+
+                // Log work form state
+                const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0]);
+                const [logTech, setLogTech] = useState('');
+                const [logNotes, setLogNotes] = useState('');
+
+                // Schedule form state
+                const [schedType, setSchedType] = useState(artifact.maintenance?.type || 'Cleaning');
+                const [schedFreq, setSchedFreq] = useState(artifact.maintenance?.frequency || 'Monthly');
+                const [schedCustomDays, setSchedCustomDays] = useState(artifact.maintenance?.customDays || '');
+                const [schedMethod, setSchedMethod] = useState(artifact.maintenance?.method || '');
+                const [schedNotes, setSchedNotes] = useState(artifact.maintenance?.scheduleNotes || '');
+                const [schedAssigned, setSchedAssigned] = useState(artifact.maintenance?.assignedTo || '');
+
+                useEffect(() => { setCurrentPhotoIndex(0); }, [artifact.id]);
+
+                const handlePhotoUpload = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    if (artifact.photos && artifact.photos.length >= 5) {
+                        alert('Maximum 5 photos per item. Please delete a photo first.');
+                        return;
+                    }
+                    const result = await uploadPhoto(file, artifact.id);
+                    if (result) {
+                        const { fullUrl, thumbUrl } = result;
+                        const newPhotos  = artifact.photos     ? [...artifact.photos,     fullUrl]  : [fullUrl];
+                        const newThumbs  = artifact.thumbnails ? [...artifact.thumbnails, thumbUrl] : [thumbUrl];
+                        const changeText = artifact.photos?.length > 0 ? `Added photo (${newPhotos.length} total)` : 'Added first photo';
+                        await db.collection('museum_artifacts').doc(artifact.id).update({
+                            photos:     newPhotos,
+                            thumbnails: newThumbs,
+                            updatedAt:  firebase.firestore.FieldValue.serverTimestamp(),
+                            lastChange: changeText
+                        });
+                        setCurrentPhotoIndex(newPhotos.length - 1);
+                    }
+                };
+
+                const handleSaveSchedule = async () => {
+                    setSavingMaint(true);
+                    const nextDue = calcNextDue(
+                        artifact.maintenance?.lastDone || null,
+                        schedFreq,
+                        schedCustomDays
+                    );
+                    await db.collection('museum_artifacts').doc(artifact.id).update({
+                        maintenance: {
+                            ...(artifact.maintenance || {}),
+                            type: schedType,
+                            frequency: schedFreq,
+                            customDays: schedFreq === 'Custom' ? schedCustomDays : '',
+                            method: schedMethod,
+                            scheduleNotes: schedNotes,
+                            assignedTo: schedAssigned,
+                            nextDue: nextDue,
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        },
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastChange: 'Maintenance schedule updated'
+                    });
+                    setSavingMaint(false);
+                    setShowSetSchedule(false);
+                };
+
+                const handleLogWork = async () => {
+                    if (!logDate) { alert('Please enter a date'); return; }
+                    setSavingMaint(true);
+                    const prevHistory = artifact.maintenance?.history || [];
+                    const newEntry = { date: logDate, technician: logTech, notes: logNotes, id: Date.now().toString() };
+                    const newHistory = [newEntry, ...prevHistory];
+
+                    // Recalculate next due from this log date
+                    const nextDue = calcNextDue(logDate, artifact.maintenance?.frequency || '', artifact.maintenance?.customDays || '');
+
+                    await db.collection('museum_artifacts').doc(artifact.id).update({
+                        maintenance: {
+                            ...(artifact.maintenance || {}),
+                            lastDone: logDate,
+                            nextDue: nextDue,
+                            history: newHistory
+                        },
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastChange: `Maintenance logged: ${schedType || 'Work'} on ${logDate}`
+                    });
+
+                    setLogDate(new Date().toISOString().split('T')[0]);
+                    setLogTech('');
+                    setLogNotes('');
+                    setSavingMaint(false);
+                    setShowLogWork(false);
+                };
+
+                const m = artifact.maintenance || {};
+                const status = maintStatus(m.nextDue);
+                const { icon, label, cls } = maintStatusLabel(status, m.nextDue);
+                const history = m.history || [];
+
+                return (
+                    <div className="modal" onClick={onClose}>
+                        <div className="modal-content" onClick={e => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h2 className="modal-title">{artifact.name}</h2>
+                                <button className="close-btn" onClick={onClose}>×</button>
+                            </div>
+
+                            {/* Tabs */}
+                            <div className="detail-tabs">
+                                <button className={`detail-tab ${activeTab === 'details' ? 'active' : ''}`} onClick={() => setActiveTab('details')}>
+                                    📋 Details
+                                </button>
+                                <button className={`detail-tab ${activeTab === 'maintenance' ? 'active' : ''}`} onClick={() => setActiveTab('maintenance')}>
+                                    🔧 Maintenance {status === 'overdue' ? '🔴' : status === 'soon' ? '🟡' : ''}
+                                </button>
+                                <button className={`detail-tab ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>
+                                    📜 History {history.length > 0 ? `(${history.length})` : ''}
+                                </button>
+                            </div>
+
+                            {/* ── DETAILS TAB ── */}
+                            {activeTab === 'details' && (<>
+                                <div className="photo-section">
+                                    <div className="detail-label">
+                                        Photos {artifact.photos?.length > 0 && `(${currentPhotoIndex + 1} of ${artifact.photos.length})`}
+                                    </div>
+                                    <div className="photo-display">
+                                        {artifact.photos && artifact.photos.length > 0 && artifact.photos[currentPhotoIndex] ? (
+                                            <>
+                                                <img src={artifact.photos[currentPhotoIndex]} alt={artifact.name} key={`${artifact.id}-${currentPhotoIndex}`} />
+                                                {artifact.photos.length > 1 && (<>
+                                                    <button style={{position:'absolute',left:'10px',top:'50%',transform:'translateY(-50%)',background:'rgba(0,0,0,0.7)',color:'white',border:'none',borderRadius:'50%',width:'40px',height:'40px',fontSize:'20px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}
+                                                        onClick={(e) => { e.stopPropagation(); setCurrentPhotoIndex(prev => prev === 0 ? artifact.photos.length - 1 : prev - 1); }}>←</button>
+                                                    <button style={{position:'absolute',right:'10px',top:'50%',transform:'translateY(-50%)',background:'rgba(0,0,0,0.7)',color:'white',border:'none',borderRadius:'50%',width:'40px',height:'40px',fontSize:'20px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}
+                                                        onClick={(e) => { e.stopPropagation(); setCurrentPhotoIndex(prev => prev === artifact.photos.length - 1 ? 0 : prev + 1); }}>→</button>
+                                                </>)}
+                                            </>
+                                        ) : (
+                                            <div className="photo-placeholder">📷</div>
+                                        )}
+                                    </div>
+                                    {artifact.photos && artifact.photos.length > 1 && (
+                                        <div style={{display:'flex',gap:'5px',marginTop:'10px',justifyContent:'center',flexWrap:'wrap'}}>
+                                            {artifact.photos.map((photo, idx) => (
+                                                <div key={idx} onClick={() => setCurrentPhotoIndex(idx)} style={{width:'60px',height:'60px',border:idx===currentPhotoIndex?'3px solid #e63946':'2px solid rgba(255,255,255,0.2)',borderRadius:'8px',overflow:'hidden',cursor:'pointer',opacity:idx===currentPhotoIndex?1:0.6}}>
+                                                    <img src={photo} style={{width:'100%',height:'100%',objectFit:'cover'}} alt={`Photo ${idx + 1}`} />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <input type="file" ref={fileInputRef} accept="image/*" style={{display:'none'}} onChange={handlePhotoUpload} />
+                                    <div style={{display:'flex',gap:'10px',marginTop:'10px'}}>
+                                        <button className="btn btn-secondary" style={{flex:1}} onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto || (artifact.photos?.length >= 5)}>
+                                            {uploadingPhoto ? 'Uploading...' : artifact.photos?.length >= 5 ? 'Max 5 Photos' : artifact.photos?.length > 0 ? `Add Photo (${artifact.photos.length}/5)` : 'Add Photo'}
+                                        </button>
+                                        {artifact.photos?.length > 0 && (
+                                            <button className="btn btn-secondary" style={{flex:1,background:'rgba(220,53,69,0.2)',borderColor:'#dc3545'}}
+                                                onClick={async () => {
+                                                    if (confirm('Delete this photo? This cannot be undone.')) {
+                                                        const idx = currentPhotoIndex;
+                                                        const newPhotos = artifact.photos.filter((_,i) => i !== idx);
+                                                        const newThumbs = (artifact.thumbnails || []).filter((_,i) => i !== idx);
+                                                        try {
+                                                            // Delete full-res from storage
+                                                            const photoRef = storage.refFromURL(artifact.photos[idx]);
+                                                            await photoRef.delete();
+                                                            // Delete thumbnail from storage if it exists
+                                                            if (artifact.thumbnails?.[idx]) {
+                                                                try {
+                                                                    const thumbRef = storage.refFromURL(artifact.thumbnails[idx]);
+                                                                    await thumbRef.delete();
+                                                                } catch(e) { /* thumb may not exist, ignore */ }
+                                                            }
+                                                        } catch(error) {
+                                                            console.error('Storage delete error:', error);
+                                                        }
+                                                        // Always update Firestore even if storage delete failed
+                                                        await db.collection('museum_artifacts').doc(artifact.id).update({
+                                                            photos: newPhotos,
+                                                            thumbnails: newThumbs,
+                                                            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                                            lastChange: `Deleted photo (${newPhotos.length} remaining)`
+                                                        });
+                                                        if (currentPhotoIndex >= newPhotos.length) setCurrentPhotoIndex(Math.max(0, newPhotos.length - 1));
+                                                    }
+                                                }}>🗑️ Delete Photo</button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="detail-section">
+                                    <div className="detail-label">Item Number</div>
+                                    <div className="detail-value">#{artifact.itemNumber}</div>
+                                </div>
+                                <div className="detail-section">
+                                    <div className="detail-label">Location</div>
+                                    <div className="detail-value">{artifact.location}</div>
+                                </div>
+                                {artifact.description && (<div className="detail-section"><div className="detail-label">Description</div><div className="detail-value">{artifact.description}</div></div>)}
+                                {artifact.donor && (<div className="detail-section"><div className="detail-label">Donor / Source</div><div className="detail-value">{artifact.donor}</div></div>)}
+                                {artifact.condition && (<div className="detail-section"><div className="detail-label">Condition</div><div className="detail-value"><span className={`status-badge status-${artifact.condition.toLowerCase()}`}>{artifact.condition}</span></div></div>)}
+                                {artifact.conditionNotes && (<div className="detail-section"><div className="detail-label">Condition Notes</div><div className="detail-value">{artifact.conditionNotes}</div></div>)}
+                                {artifact.lastServiced && (<div className="detail-section"><div className="detail-label">Last Serviced</div><div className="detail-value">{artifact.lastServiced}</div></div>)}
+                                {artifact.servicingDetails && (<div className="detail-section"><div className="detail-label">Servicing Details</div><div className="detail-value">{artifact.servicingDetails}</div></div>)}
+
+                                <div className="controls" style={{marginTop:'30px'}}>
+                                    <button className="btn" onClick={() => { setShowEditModal(artifact); onClose(); }}>Edit Artifact</button>
+                                    <button className="btn btn-secondary" onClick={onClose}>Close</button>
+                                </div>
+                            </>)}
+
+                            {/* ── MAINTENANCE TAB ── */}
+                            {activeTab === 'maintenance' && (<>
+                                {/* Status badge */}
+                                <div className={`maint-status-badge ${cls}`}>
+                                    {icon} {label}
+                                </div>
+
+                                {/* Schedule section */}
+                                <div className="maintenance-section">
+                                    <div className="maintenance-section-title">📅 Maintenance Schedule</div>
+                                    {m.frequency ? (<>
+                                        <div className="maint-field-row">
+                                            <div className="maint-field">
+                                                <div className="maint-field-label">Type</div>
+                                                <div className="maint-field-value">{m.type || '—'}</div>
+                                            </div>
+                                            <div className="maint-field">
+                                                <div className="maint-field-label">Frequency</div>
+                                                <div className="maint-field-value">{m.frequency === 'Custom' ? `Every ${m.customDays} days` : m.frequency}</div>
+                                            </div>
+                                        </div>
+                                        <div className="maint-field-row">
+                                            <div className="maint-field">
+                                                <div className="maint-field-label">Last Done</div>
+                                                <div className="maint-field-value">{m.lastDone || 'Not yet done'}</div>
+                                            </div>
+                                            <div className="maint-field">
+                                                <div className="maint-field-label">Next Due</div>
+                                                <div className="maint-field-value" style={{color: status === 'overdue' ? '#f44336' : status === 'soon' ? '#ffc107' : 'inherit'}}>{m.nextDue || '—'}</div>
+                                            </div>
+                                        </div>
+                                        {m.method && (<div className="maint-field" style={{marginBottom:'10px'}}><div className="maint-field-label">Method</div><div className="maint-field-value">{m.method}</div></div>)}
+                                        {m.scheduleNotes && (<div className="maint-field" style={{marginBottom:'10px'}}><div className="maint-field-label">Notes</div><div className="maint-field-value">{m.scheduleNotes}</div></div>)}
+                                        {m.assignedTo && (<div className="maint-field" style={{marginBottom:'10px'}}><div className="maint-field-label">Assigned To</div><div className="maint-field-value">👤 {m.assignedTo}</div></div>)}
+                                    </>) : (
+                                        <div className="no-maintenance-msg">
+                                            <div className="no-maint-icon">🔧</div>
+                                            <div>No schedule set yet</div>
+                                            <div style={{fontSize:'12px',marginTop:'5px'}}>Set up a schedule to track maintenance</div>
+                                        </div>
+                                    )}
+                                    <button className="btn btn-secondary" style={{width:'100%',marginTop:'12px'}} onClick={() => setShowSetSchedule(true)}>
+                                        {m.frequency ? '✏️ Edit Schedule' : '+ Set Up Schedule'}
+                                    </button>
+                                </div>
+
+                                {/* Log work */}
+                                <div className="maintenance-section">
+                                    <div className="maintenance-section-title">✅ Log Completed Work</div>
+                                    <p style={{fontSize:'13px',color:'rgba(255,255,255,0.55)',marginBottom:'12px'}}>
+                                        Record work done today or on a past date. This updates the "Last Done" date and recalculates when next due.
+                                    </p>
+                                    <button className="btn" style={{width:'100%'}} onClick={() => setShowLogWork(true)}>
+                                        + Log Work Done
+                                    </button>
+                                </div>
+
+                                {/* Recent history preview */}
+                                {history.length > 0 && (
+                                    <div className="maintenance-section">
+                                        <div className="maintenance-section-title">🕐 Recent Work ({history.length} entries)</div>
+                                        {history.slice(0,3).map(entry => (
+                                            <div key={entry.id || entry.date} className="maint-history-entry">
+                                                <div className="maint-history-date">{entry.date}</div>
+                                                {entry.technician && <div className="maint-history-tech">👤 {entry.technician}</div>}
+                                                {entry.notes && <div className="maint-history-notes">{entry.notes}</div>}
+                                            </div>
+                                        ))}
+                                        {history.length > 3 && (
+                                            <button className="btn btn-secondary" style={{width:'100%',marginTop:'8px',fontSize:'13px'}} onClick={() => setActiveTab('history')}>
+                                                View all {history.length} entries →
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Log Work Modal */}
+                                {showLogWork && (
+                                    <div className="log-work-modal" onClick={() => setShowLogWork(false)}>
+                                        <div className="log-work-content" onClick={e => e.stopPropagation()}>
+                                            <div className="modal-header" style={{marginBottom:'20px'}}>
+                                                <h3 style={{color:'#fff',fontSize:'18px'}}>Log Work Done</h3>
+                                                <button className="close-btn" onClick={() => setShowLogWork(false)}>×</button>
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="form-label">Date Work Done *</label>
+                                                <input type="date" className="form-input" value={logDate} onChange={e => setLogDate(e.target.value)} />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="form-label">Technician / Staff Name</label>
+                                                <input type="text" className="form-input" placeholder="e.g. John Smith" value={logTech} onChange={e => setLogTech(e.target.value)} />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="form-label">Work Notes</label>
+                                                <textarea className="form-textarea" placeholder="Describe what was done..." value={logNotes} onChange={e => setLogNotes(e.target.value)} style={{minHeight:'80px'}} />
+                                            </div>
+                                            <div style={{display:'flex',gap:'10px'}}>
+                                                <button className="btn" style={{flex:1}} onClick={handleLogWork} disabled={savingMaint}>
+                                                    {savingMaint ? 'Saving...' : '✓ Save Log Entry'}
+                                                </button>
+                                                <button className="btn btn-secondary" style={{flex:1}} onClick={() => setShowLogWork(false)}>Cancel</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Set Schedule Modal */}
+                                {showSetSchedule && (
+                                    <div className="log-work-modal" onClick={() => setShowSetSchedule(false)}>
+                                        <div className="log-work-content" onClick={e => e.stopPropagation()} style={{maxWidth:'520px',maxHeight:'90vh',overflowY:'auto'}}>
+                                            <div className="modal-header" style={{marginBottom:'20px'}}>
+                                                <h3 style={{color:'#fff',fontSize:'18px'}}>Set Maintenance Schedule</h3>
+                                                <button className="close-btn" onClick={() => setShowSetSchedule(false)}>×</button>
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="form-label">Maintenance Type</label>
+                                                <select className="form-select" value={schedType} onChange={e => setSchedType(e.target.value)}>
+                                                    <option>Cleaning</option>
+                                                    <option>Restoration</option>
+                                                    <option>Condition Check</option>
+                                                    <option>Repair</option>
+                                                    <option>Other</option>
+                                                </select>
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="form-label">Frequency</label>
+                                                <select className="form-select" value={schedFreq} onChange={e => setSchedFreq(e.target.value)}>
+                                                    <option>One-time</option>
+                                                    <option>Weekly</option>
+                                                    <option>Monthly</option>
+                                                    <option>Yearly</option>
+                                                    <option>Custom</option>
+                                                </select>
+                                            </div>
+                                            {schedFreq === 'Custom' && (
+                                                <div className="form-group">
+                                                    <label className="form-label">Every how many days?</label>
+                                                    <input type="number" className="form-input" min="1" placeholder="e.g. 90" value={schedCustomDays} onChange={e => setSchedCustomDays(e.target.value)} />
+                                                </div>
+                                            )}
+                                            <div className="form-group">
+                                                <label className="form-label">Method / How to do it</label>
+                                                <input type="text" className="form-input" placeholder="e.g. Gentle cloth wipe, no solvents" value={schedMethod} onChange={e => setSchedMethod(e.target.value)} />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="form-label">Notes / Precautions</label>
+                                                <textarea className="form-textarea" placeholder="Any special instructions..." value={schedNotes} onChange={e => setSchedNotes(e.target.value)} style={{minHeight:'70px'}} />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="form-label">Assigned To (optional)</label>
+                                                <input type="text" className="form-input" placeholder="e.g. Conservation team" value={schedAssigned} onChange={e => setSchedAssigned(e.target.value)} />
+                                            </div>
+                                            <div style={{display:'flex',gap:'10px'}}>
+                                                <button className="btn" style={{flex:1}} onClick={handleSaveSchedule} disabled={savingMaint}>
+                                                    {savingMaint ? 'Saving...' : '✓ Save Schedule'}
+                                                </button>
+                                                <button className="btn btn-secondary" style={{flex:1}} onClick={() => setShowSetSchedule(false)}>Cancel</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </>)}
+
+                            {/* ── HISTORY TAB ── */}
+                            {activeTab === 'history' && (<>
+                                <div className="maintenance-section">
+                                    <div className="maintenance-section-title">📜 Full Maintenance History</div>
+                                    {history.length === 0 ? (
+                                        <div className="no-maintenance-msg">
+                                            <div className="no-maint-icon">📋</div>
+                                            <div>No work logged yet</div>
+                                            <div style={{fontSize:'12px',marginTop:'5px'}}>Switch to the Maintenance tab to log completed work</div>
+                                        </div>
+                                    ) : (
+                                        history.map(entry => (
+                                            <div key={entry.id || entry.date} className="maint-history-entry">
+                                                <div className="maint-history-date">{entry.date}</div>
+                                                {entry.technician && <div className="maint-history-tech">👤 {entry.technician}</div>}
+                                                <div className="maint-history-notes">{entry.notes || 'No notes recorded'}</div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                                <div style={{display:'flex',gap:'10px',marginTop:'10px'}}>
+                                    <button className="btn" onClick={() => setActiveTab('maintenance')}>+ Log New Work</button>
+                                    <button className="btn btn-secondary" onClick={onClose}>Close</button>
+                                </div>
+                            </>)}
+                        </div>
+                    </div>
+                );
+            };
+
+            const AddEditModal = ({ artifact, onClose }) => {
+                const [formData, setFormData] = useState(artifact || {
+                    itemNumber: '',
+                    name: '',
+                    site: selectedSite,
+                    location: '',
+                    description: '',
+                    donor: '',
+                    condition: 'Good',
+                    conditionNotes: '',
+                    lastServiced: '',
+                    servicingDetails: ''
+                });
+
+                const handleSubmit = async (e) => {
+                    e.preventDefault();
+                    try {
+                        if (artifact) {
+                            // Track changes
+                            const changes = [];
+                            
+                            if (formData.name !== artifact.name) {
+                                changes.push(`Changed name from "${artifact.name}" to "${formData.name}"`);
+                            }
+                            if (formData.location !== artifact.location) {
+                                changes.push(`Moved from "${artifact.location || 'none'}" to "${formData.location}"`);
+                            }
+                            if (formData.description !== artifact.description) {
+                                changes.push('Updated description');
+                            }
+                            if (formData.donor !== artifact.donor) {
+                                changes.push('Updated donor');
+                            }
+                            if (formData.condition !== artifact.condition) {
+                                changes.push(`Changed condition from "${artifact.condition}" to "${formData.condition}"`);
+                            }
+                            if (formData.itemNumber !== artifact.itemNumber) {
+                                changes.push(`Changed item # from ${artifact.itemNumber} to ${formData.itemNumber}`);
+                            }
+                            if (formData.site !== artifact.site) {
+                                changes.push(`Moved from ${artifact.site} to ${formData.site}`);
+                            }
+                            
+                            // Update existing with change log
+                            await db.collection('museum_artifacts').doc(artifact.id).update({
+                                ...formData,
+                                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                lastChange: changes.join(', ') || 'Details updated'
+                            });
+                        } else {
+                            // Add new
+                            await db.collection('museum_artifacts').add({
+                                ...formData,
+                                itemNumber: parseInt(formData.itemNumber) || null,
+                                photos: [],
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                lastChange: 'Item created'
+                            });
+                        }
+                        onClose();
+                    } catch (error) {
+                        console.error('Error saving artifact:', error);
+                        alert('Error saving artifact');
+                    }
+                };
+
+                return (
+                    <div className="modal" onClick={onClose}>
+                        <div className="modal-content" onClick={e => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h2 className="modal-title">
+                                    {artifact ? 'Edit Artifact' : 'Add New Artifact'}
+                                </h2>
+                                <button className="close-btn" onClick={onClose}>×</button>
+                            </div>
+
+                            <form onSubmit={handleSubmit}>
+                                <div className="form-group">
+                                    <label className="form-label">Item Number</label>
+                                    <input 
+                                        type="number" 
+                                        className="form-input"
+                                        value={formData.itemNumber}
+                                        onChange={e => setFormData({...formData, itemNumber: e.target.value})}
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Site *</label>
+                                    <select 
+                                        className="form-input"
+                                        required
+                                        value={formData.site}
+                                        onChange={e => setFormData({...formData, site: e.target.value})}
+                                    >
+                                        {sites.map(site => (
+                                            <option key={site} value={site}>{site}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Artifact Name *</label>
+                                    <input 
+                                        type="text" 
+                                        className="form-input" 
+                                        required
+                                        value={formData.name}
+                                        onChange={e => setFormData({...formData, name: e.target.value})}
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Location *</label>
+                                    <input 
+                                        type="text" 
+                                        className="form-input"
+                                        required
+                                        placeholder="e.g., Spitfire Hall"
+                                        value={formData.location}
+                                        onChange={e => setFormData({...formData, location: e.target.value})}
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Description</label>
+                                    <textarea 
+                                        className="form-textarea"
+                                        value={formData.description}
+                                        onChange={e => setFormData({...formData, description: e.target.value})}
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Donor / Source</label>
+                                    <input 
+                                        type="text" 
+                                        className="form-input"
+                                        value={formData.donor}
+                                        onChange={e => setFormData({...formData, donor: e.target.value})}
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Condition</label>
+                                    <select 
+                                        className="form-select"
+                                        value={formData.condition}
+                                        onChange={e => setFormData({...formData, condition: e.target.value})}
+                                    >
+                                        <option value="Excellent">Excellent</option>
+                                        <option value="Good">Good</option>
+                                        <option value="Fair">Fair</option>
+                                        <option value="Poor">Poor</option>
+                                    </select>
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Condition Notes</label>
+                                    <textarea 
+                                        className="form-textarea"
+                                        value={formData.conditionNotes}
+                                        onChange={e => setFormData({...formData, conditionNotes: e.target.value})}
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Last Serviced</label>
+                                    <input 
+                                        type="date" 
+                                        className="form-input"
+                                        value={formData.lastServiced}
+                                        onChange={e => setFormData({...formData, lastServiced: e.target.value})}
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Servicing Details</label>
+                                    <textarea 
+                                        className="form-textarea"
+                                        value={formData.servicingDetails}
+                                        onChange={e => setFormData({...formData, servicingDetails: e.target.value})}
+                                    />
+                                </div>
+
+                                <div className="controls">
+                                    <button type="submit" className="btn">
+                                        {artifact ? 'Update' : 'Add'} Artifact
+                                    </button>
+                                    <button type="button" className="btn btn-secondary" onClick={onClose}>
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                );
+            };
+
+            const FloorPlanModal = ({ onClose }) => {
+                const [selectedRoom, setSelectedRoom] = useState(null);
+                const [roomArtifacts, setRoomArtifacts] = useState([]);
+
+                const roomZones = {
+                    'Spitfire Hall': { x: 70, y: 15, width: 25, height: 20, color: '#e63946' },
+                    'Strategy Room': { x: 35, y: 40, width: 20, height: 15, color: '#4361ee' },
+                    'Strategy Room ': { x: 35, y: 40, width: 20, height: 15, color: '#4361ee' },
+                    'Sapper Suite': { x: 20, y: 55, width: 18, height: 15, color: '#f72585' },
+                    'Gunners Gallery': { x: 65, y: 50, width: 25, height: 15, color: '#4cc9f0' },
+                    'Corridor': { x: 50, y: 30, width: 15, height: 40, color: '#7209b7' },
+                    'Workshop': { x: 10, y: 20, width: 15, height: 20, color: '#f77f00' },
+                    'Workshop ': { x: 10, y: 20, width: 15, height: 20, color: '#f77f00' },
+                    'Office': { x: 80, y: 75, width: 15, height: 15, color: '#06d6a0' },
+                    'Old store': { x: 5, y: 75, width: 12, height: 12, color: '#ffd60a' },
+                    'Shop': { x: 85, y: 40, width: 10, height: 10, color: '#fb5607' },
+                    'Shop (to move to sapper suite)': { x: 85, y: 40, width: 10, height: 10, color: '#fb5607' }
+                };
+
+                const handleRoomClick = (roomName) => {
+                    setSelectedRoom(roomName);
+                    const items = artifacts.filter(a => a.location?.trim() === roomName.trim());
+                    setRoomArtifacts(items);
+                };
+
+                // Get unique room names from artifacts
+                const uniqueRooms = [...new Set(artifacts.map(a => a.location).filter(Boolean))].sort();
+
+                return (
+                    <div className="modal" onClick={onClose}>
+                        <div className="modal-content" onClick={e => e.stopPropagation()} style={{maxWidth: '1400px', maxHeight: '95vh'}}>
+                            <div className="modal-header">
+                                <h2 className="modal-title">Museum Floor Plan - Hay's Level</h2>
+                                <button className="close-btn" onClick={onClose}>×</button>
+                            </div>
+
+                            <div style={{display: 'flex', gap: '20px', height: 'calc(95vh - 100px)'}}>
+                                {/* Floor Plan Section */}
+                                <div style={{flex: 2, overflow: 'auto'}}>
+                                    <div style={{
+                                        background: 'white', 
+                                        borderRadius: '10px', 
+                                        padding: '20px',
+                                        position: 'relative',
+                                        minHeight: '600px'
+                                    }}>
+                                        <h3 style={{color: '#333', marginBottom: '10px', textAlign: 'center'}}>
+                                            Hay's Level Floor Plan
+                                        </h3>
+                                        <img 
+                                            src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABtoAAATZCAIAAADVEVdyAAEAAElEQVR42uzde1xUdf7H8Q+COgyiXCYFhLyBZShYAlNqtpUi5SUv6WJrW3kJd7dVs93a32bruku727ZZul20wG5ukqaZYiJ4KW8FQglqmYA3UAYFZgSEUYH5/XFqlkXEgRmGgXk9H/5xPJw5c+Zz5nbe8+88HjcKAAAAAEAE/h9WPgXjfDE15QAAAABJRU5ErkJggg=="
+                                            alt="Hay's Level Floor Plan"
+                                            style={{
+                                                width: '100%',
+                                                height: 'auto',
+                                                borderRadius: '10px',
+                                                boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                                            }}
+                                        />
+                                        <p style={{
+                                            marginTop: '15px', 
+                                            color: '#666', 
+                                            textAlign: 'center',
+                                            fontSize: '14px'
+                                        }}>
+                                            Click a room name on the right to see its artifacts →
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Room List & Artifacts Section */}
+                                <div style={{flex: 1, display: 'flex', flexDirection: 'column', gap: '15px', overflow: 'auto'}}>
+                                    <div>
+                                        <h3 style={{marginBottom: '15px', color: '#fff'}}>Locations ({uniqueRooms.length})</h3>
+                                        <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
+                                            {uniqueRooms.map(room => {
+                                                const count = artifacts.filter(a => a.location?.trim() === room.trim()).length;
+                                                const zone = roomZones[room] || {};
+                                                return (
+                                                    <button
+                                                        key={room}
+                                                        onClick={() => handleRoomClick(room)}
+                                                        style={{
+                                                            background: selectedRoom === room ? zone.color || '#e63946' : 'rgba(255,255,255,0.1)',
+                                                            border: 'none',
+                                                            padding: '12px 15px',
+                                                            borderRadius: '8px',
+                                                            color: '#fff',
+                                                            cursor: 'pointer',
+                                                            textAlign: 'left',
+                                                            transition: 'all 0.3s ease',
+                                                            fontSize: '14px'
+                                                        }}
+                                                    >
+                                                        <div style={{fontWeight: '600'}}>{room}</div>
+                                                        <div style={{fontSize: '12px', opacity: 0.8, marginTop: '4px'}}>
+                                                            {count} artifact{count !== 1 ? 's' : ''}
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {selectedRoom && (
+                                        <div style={{
+                                            background: 'rgba(255,255,255,0.05)',
+                                            borderRadius: '10px',
+                                            padding: '15px',
+                                            marginTop: '10px'
+                                        }}>
+                                            <h4 style={{marginBottom: '10px', color: '#fff'}}>
+                                                {selectedRoom} ({roomArtifacts.length})
+                                            </h4>
+                                            <div style={{
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '8px',
+                                                maxHeight: '300px',
+                                                overflow: 'auto'
+                                            }}>
+                                                {roomArtifacts.map(artifact => (
+                                                    <div
+                                                        key={artifact.id}
+                                                        onClick={() => {
+                                                            setSelectedArtifact(artifact);
+                                                            setShowFloorPlan(false);
+                                                        }}
+                                                        style={{
+                                                            background: 'rgba(255,255,255,0.05)',
+                                                            padding: '10px',
+                                                            borderRadius: '6px',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.2s ease'
+                                                        }}
+                                                    >
+                                                        <div style={{fontSize: '13px', fontWeight: '600'}}>
+                                                            #{artifact.itemNumber} {artifact.name}
+                                                        </div>
+                                                        {artifact.description && (
+                                                            <div style={{
+                                                                fontSize: '11px',
+                                                                color: 'rgba(255,255,255,0.6)',
+                                                                marginTop: '4px'
+                                                            }}>
+                                                                {artifact.description.substring(0, 50)}...
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            if (loading) {
+                return (
+                    <div className="app-container">
+                        <div className="empty-state">
+                            <div className="empty-icon">⏳</div>
+                            <h2>Loading artifacts...</h2>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="app-container">
+                    <div className="header">
+                        <div className="header-content">
+                            <div className="logo-section">
+                                <div className="logo">WT</div>
+                                <div>
+                                    <h1>WWII Tunnels Artifact Catalog</h1>
+                                    <div className="subtitle">Museum Collection Management · V6</div>
+                                </div>
+                            </div>
+                            <div className="controls">
+                                <button className="btn" onClick={() => setShowAddModal(true)}>
+                                    + Add Artifact
+                                </button>
+                                {artifacts.filter(a => !a.site).length > 0 && (
+                                    <button className="btn btn-success" onClick={migrateToSite} style={{background: '#28a745'}}>
+                                        🔄 Migrate {artifacts.filter(a => !a.site).length} to WWII Tunnels
+                                    </button>
+                                )}
+                                <button 
+                                    className="btn btn-secondary" 
+                                    onClick={() => {
+                                        setBulkMode(!bulkMode);
+                                        setSelectedItems([]);
+                                        setShowBulkActions(false);
+                                    }}
+                                    style={{background: bulkMode ? '#e63946' : undefined}}
+                                >
+                                    {bulkMode ? '✓ Bulk Mode ON' : '☑️ Bulk Select'}
+                                </button>
+                                <button className="btn btn-secondary" onClick={exportToExcel}>
+                                    📊 Export Excel
+                                </button>
+                                <button className="btn btn-secondary" onClick={() => setShowCompactModal(true)}>
+                                    🔢 Compact Numbers
+                                </button>
+                                <button className="btn btn-secondary" onClick={() => setShowFloorPlan(true)}>
+                                    🗺️ Floor Plan
+                                </button>
+                                {reprocessing ? (
+                                    <div style={{display:'flex', alignItems:'center', gap:'10px', background:'rgba(255,193,7,0.1)', border:'1px solid rgba(255,193,7,0.3)', borderRadius:'8px', padding:'8px 14px'}}>
+                                        <div style={{fontSize:'13px', color:'#ffc107'}}>
+                                            {reprocessProgress?.retryMode ? '🔁 Retrying: ' : '🖼️ Thumbnails: '}
+                                            <strong>{reprocessProgress?.done || 0}/{reprocessProgress?.total || '…'}</strong>
+                                            {reprocessProgress?.fixed > 0 && <span style={{color:'#4caf50', marginLeft:'6px'}}>+{reprocessProgress.fixed} fixed</span>}
+                                            {reprocessProgress?.failed > 0 && <span style={{color:'#f44336', marginLeft:'6px'}}>{reprocessProgress.failed} failed</span>}
+                                        </div>
+                                        <div style={{width:'80px', height:'6px', background:'rgba(255,255,255,0.1)', borderRadius:'3px', overflow:'hidden'}}>
+                                            <div style={{height:'100%', background:'#ffc107', borderRadius:'3px', width: reprocessProgress?.total ? `${(reprocessProgress.done/reprocessProgress.total)*100}%` : '0%', transition:'width 0.3s'}} />
+                                        </div>
+                                        <button className="btn" style={{padding:'6px 12px', fontSize:'12px', background:'rgba(244,67,54,0.7)', minHeight:'auto'}} onClick={pauseReprocess}>
+                                            ⏸ Pause
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div style={{display:'flex', gap:'6px'}}>
+                                        <button
+                                            className="btn btn-secondary"
+                                            onClick={() => reprocessExistingPhotos(false)}
+                                            title="Generate thumbnails for all photos. Progress is saved — you can pause and resume."
+                                        >
+                                            🖼️ {(() => { try { const s = JSON.parse(localStorage.getItem('wwiitunnels_thumb_progress')); return s?.completedIds?.length > 0 ? `Resume Thumbnails (${s.completedIds.length} done)` : 'Generate Thumbnails'; } catch(e) { return 'Generate Thumbnails'; } })()}
+                                        </button>
+                                        {artifacts.some(a => a.photos?.length > 0 && a.photos.some((_,i) => !a.thumbnails?.[i])) && (
+                                            <button
+                                                className="btn btn-secondary"
+                                                onClick={() => reprocessExistingPhotos(true)}
+                                                title="Retry only photos that failed or are missing thumbnails"
+                                                style={{background:'rgba(244,67,54,0.15)', borderColor:'rgba(244,67,54,0.4)', color:'#f88'}}
+                                            >
+                                                🔁 Retry Failed
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Site Tabs */}
+                            <div style={{
+                                display: 'flex',
+                                gap: '10px',
+                                marginBottom: '20px',
+                                borderBottom: '2px solid rgba(255,255,255,0.1)',
+                                paddingBottom: '15px'
+                            }}>
+                                {sites.map(site => (
+                                    <button
+                                        key={site}
+                                        onClick={() => {
+                                            setSelectedSite(site);
+                                            setSelectedLocation('All');
+                                            setSearchTerm('');
+                                        }}
+                                        style={{
+                                            background: selectedSite === site ? '#e63946' : 'rgba(255,255,255,0.1)',
+                                            border: 'none',
+                                            color: 'white',
+                                            padding: '10px 20px',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            fontWeight: selectedSite === site ? 'bold' : 'normal',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        {site}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div className="stats-bar">
+                        <div className="stat-item">
+                            <div className="stat-label">{selectedSite}</div>
+                            <div className="stat-value">{artifacts.filter(a => a.site === selectedSite).length}</div>
+                        </div>
+                        <div className="stat-item">
+                            <div className="stat-label">Locations</div>
+                            <div className="stat-value">{locations.length - 1}</div>
+                        </div>
+                        <div className="stat-item">
+                            <div className="stat-label">With Photos</div>
+                            <div className="stat-value">
+                                {artifacts.filter(a => a.site === selectedSite && a.photos?.length > 0).length}
+                            </div>
+                        </div>
+                        <div className="stat-item">
+                            <div className="stat-label">Showing</div>
+                            <div className="stat-value">{filteredArtifacts.length}</div>
+                        </div>
+                    </div>
+
+                    {/* Recently Edited Section */}
+                    {artifacts.filter(a => a.updatedAt).length > 0 && (
+                        <details 
+                            style={{
+                                background: 'rgba(230, 57, 70, 0.1)',
+                                border: '1px solid rgba(230, 57, 70, 0.3)',
+                                borderRadius: '15px',
+                                padding: '20px',
+                                marginBottom: '30px'
+                            }}
+                        >
+                            <summary style={{
+                                cursor: 'pointer',
+                                fontWeight: 'bold',
+                                fontSize: '18px',
+                                color: '#e63946',
+                                marginBottom: '15px',
+                                listStyle: 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px'
+                            }}>
+                                <span>📝 Recently Edited ({artifacts.filter(a => a.updatedAt).length})</span>
+                            </summary>
+                            <div style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '8px',
+                                marginTop: '15px'
+                            }}>
+                                {artifacts
+                                    .filter(a => a.updatedAt)
+                                    .sort((a, b) => {
+                                        const aTime = a.updatedAt?.toMillis?.() || 0;
+                                        const bTime = b.updatedAt?.toMillis?.() || 0;
+                                        return bTime - aTime;
+                                    })
+                                    .slice(0, 10)
+                                    .map((artifact, index, arr) => {
+                                        const updateTime = artifact.updatedAt?.toDate?.();
+                                        const timeAgo = updateTime ? (() => {
+                                            const diff = Date.now() - updateTime.getTime();
+                                            const minutes = Math.floor(diff / 60000);
+                                            const hours = Math.floor(diff / 3600000);
+                                            const days = Math.floor(diff / 86400000);
+                                            if (minutes < 1) return 'Just now';
+                                            if (minutes < 60) return `${minutes}m ago`;
+                                            if (hours < 24) return `${hours}h ago`;
+                                            return `${days}d ago`;
+                                        })() : 'Unknown';
+
+                                        // Get the change description
+                                        const changeText = artifact.lastChange || 'Details updated';
+
+                                        return (
+                                            <div 
+                                                key={artifact.id}
+                                                onClick={() => setSelectedArtifact(artifact)}
+                                                style={{
+                                                    background: 'rgba(255, 255, 255, 0.05)',
+                                                    padding: '10px 15px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s',
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center'
+                                                }}
+                                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+                                                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+                                            >
+                                                <div style={{flex: 1}}>
+                                                    <span style={{fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginRight: '10px'}}>
+                                                        #{artifact.itemNumber}
+                                                    </span>
+                                                    <span style={{fontWeight: '500'}}>
+                                                        {artifact.name}
+                                                    </span>
+                                                    <span style={{fontSize: '13px', color: 'rgba(255,255,255,0.6)', marginLeft: '10px'}}>
+                                                        — {changeText}
+                                                    </span>
+                                                </div>
+                                                <div style={{fontSize: '12px', color: '#e63946', whiteSpace: 'nowrap', marginLeft: '15px'}}>
+                                                    {timeAgo}
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                }
+                            </div>
+                        </details>
+                    )}
+
+                    {/* Maintenance Alert Bar */}
+                    {(overdueItems.length > 0 || dueSoonItems.length > 0) && (
+                        <div className="maint-alert-bar" onClick={() => setShowMaintenanceDashboard(true)}>
+                            <div>
+                                <div className="alert-text">
+                                    🔴 {overdueItems.length > 0 ? `${overdueItems.length} item${overdueItems.length > 1 ? 's' : ''} overdue` : ''}
+                                    {overdueItems.length > 0 && dueSoonItems.length > 0 ? '  ·  ' : ''}
+                                    🟡 {dueSoonItems.length > 0 ? `${dueSoonItems.length} due soon` : ''}
+                                </div>
+                                <div className="alert-sub">Click to view maintenance dashboard →</div>
+                            </div>
+                            <span style={{fontSize:'20px'}}>→</span>
+                        </div>
+                    )}
+
+                    <div className="search-bar">
+                        <input 
+                            type="text" 
+                            className="search-input" 
+                            placeholder="Search by name, item #, location, description, or donor..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                        />
+                        <div className="filters">
+                            {locations.slice(0, 15).map(loc => (
+                                <button 
+                                    key={loc}
+                                    className={`filter-btn ${selectedLocation === loc ? 'active' : ''}`}
+                                    onClick={() => setSelectedLocation(loc)}
+                                >
+                                    {loc} {loc !== 'All' && `(${artifacts.filter(a => a.location === loc).length})`}
+                                </button>
+                            ))}
+                        </div>
+                        {/* Sort controls */}
+                        <div className="sort-filter-bar" style={{marginTop:'12px'}}>
+                            <span className="sort-label">Sort by:</span>
+                            <select className="sort-select" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+                                <option value="itemNumber">Item #</option>
+                                <option value="name">Name A–Z</option>
+                                <option value="location">Location</option>
+                                <option value="condition">Condition</option>
+                                <option value="updatedAt">Last Updated</option>
+                                <option value="createdAt">Date Added</option>
+                            </select>
+                            <button className="filter-btn" onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')}>
+                                {sortDir === 'asc' ? '↑ Asc' : '↓ Desc'}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="view-toggle">
+                        <button 
+                            className={`btn ${viewMode === 'gallery' ? '' : 'btn-secondary'}`}
+                            onClick={() => setViewMode('gallery')}
+                        >
+                            📷 Gallery
+                        </button>
+                        <button 
+                            className={`btn ${viewMode === 'list' ? '' : 'btn-secondary'}`}
+                            onClick={() => setViewMode('list')}
+                        >
+                            📋 List
+                        </button>
+                    </div>
+
+                    {filteredArtifacts.length === 0 ? (
+                        <div className="empty-state">
+                            <div className="empty-icon">🏛️</div>
+                            <h2>No artifacts found</h2>
+                            <p>Try adjusting your search or filters</p>
+                        </div>
+                    ) : viewMode === 'gallery' ? (
+                        <div className="gallery-grid">
+                            {filteredArtifacts.map(artifact => (
+                                <ArtifactCard key={artifact.id} artifact={artifact} />
+                            ))}
+                        </div>
+                    ) : (
+                        <ListView />
+                    )}
+
+                    {selectedArtifact && (
+                        <DetailModal 
+                            artifact={selectedArtifact} 
+                            onClose={() => setSelectedArtifact(null)} 
+                        />
+                    )}
+
+                    {showAddModal && (
+                        <AddEditModal onClose={() => setShowAddModal(false)} />
+                    )}
+
+                    {showEditModal && (
+                        <AddEditModal 
+                            artifact={showEditModal}
+                            onClose={() => setShowEditModal(false)} 
+                        />
+                    )}
+
+                    {showFloorPlan && (
+                        <FloorPlanModal onClose={() => setShowFloorPlan(false)} />
+                    )}
+
+                    {/* Bulk Actions Bar */}
+                    {bulkMode && selectedItems.length > 0 && (
+                        <div style={{
+                            position: 'fixed',
+                            bottom: '20px',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            background: '#e63946',
+                            padding: '15px 30px',
+                            borderRadius: '50px',
+                            display: 'flex',
+                            gap: '15px',
+                            alignItems: 'center',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                            zIndex: 1000
+                        }}>
+                            <span style={{fontWeight: 'bold'}}>{selectedItems.length} selected</span>
+                            <button 
+                                className="btn" 
+                                style={{minWidth: 'auto', padding: '8px 20px'}}
+                                onClick={() => {
+                                    const newLoc = prompt('Move to location:');
+                                    if (newLoc) bulkMoveLocation(newLoc);
+                                }}
+                            >
+                                📍 Move
+                            </button>
+                            <button 
+                                className="btn" 
+                                style={{minWidth: 'auto', padding: '8px 20px', background: '#dc3545'}}
+                                onClick={bulkDelete}
+                            >
+                                🗑️ Delete
+                            </button>
+                            <button 
+                                className="btn btn-secondary" 
+                                style={{minWidth: 'auto', padding: '8px 20px'}}
+                                onClick={() => setSelectedItems([])}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Maintenance Dashboard Modal */}
+                    {showMaintenanceDashboard && (
+                        <div className="modal" onClick={() => setShowMaintenanceDashboard(false)}>
+                            <div className="modal-content" onClick={e => e.stopPropagation()} style={{maxWidth:'700px'}}>
+                                <div className="modal-header">
+                                    <h2 className="modal-title">🔧 Maintenance Dashboard</h2>
+                                    <button className="close-btn" onClick={() => setShowMaintenanceDashboard(false)}>×</button>
+                                </div>
+
+                                {overdueItems.length > 0 && (
+                                    <div style={{marginBottom:'24px'}}>
+                                        <div style={{fontSize:'13px',fontWeight:'700',textTransform:'uppercase',letterSpacing:'1px',color:'#f44336',marginBottom:'12px'}}>
+                                            🔴 Overdue ({overdueItems.length})
+                                        </div>
+                                        {overdueItems.map(a => (
+                                            <div key={a.id} onClick={() => { setSelectedArtifact(a); setShowMaintenanceDashboard(false); }} style={{background:'rgba(244,67,54,0.08)',border:'1px solid rgba(244,67,54,0.25)',borderRadius:'8px',padding:'12px 15px',marginBottom:'8px',cursor:'pointer',transition:'all 0.2s'}}
+                                                onMouseEnter={e => e.currentTarget.style.background='rgba(244,67,54,0.15)'}
+                                                onMouseLeave={e => e.currentTarget.style.background='rgba(244,67,54,0.08)'}>
+                                                <div style={{fontWeight:'600',fontSize:'14px'}}>#{a.itemNumber} {a.name}</div>
+                                                <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginTop:'3px'}}>{a.site} · {a.location} · Due: {a.maintenance?.nextDue}</div>
+                                                <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>{a.maintenance?.type} · {a.maintenance?.frequency}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {dueSoonItems.length > 0 && (
+                                    <div style={{marginBottom:'24px'}}>
+                                        <div style={{fontSize:'13px',fontWeight:'700',textTransform:'uppercase',letterSpacing:'1px',color:'#ffc107',marginBottom:'12px'}}>
+                                            🟡 Due Soon ({dueSoonItems.length})
+                                        </div>
+                                        {dueSoonItems.map(a => (
+                                            <div key={a.id} onClick={() => { setSelectedArtifact(a); setShowMaintenanceDashboard(false); }} style={{background:'rgba(255,193,7,0.08)',border:'1px solid rgba(255,193,7,0.25)',borderRadius:'8px',padding:'12px 15px',marginBottom:'8px',cursor:'pointer',transition:'all 0.2s'}}
+                                                onMouseEnter={e => e.currentTarget.style.background='rgba(255,193,7,0.15)'}
+                                                onMouseLeave={e => e.currentTarget.style.background='rgba(255,193,7,0.08)'}>
+                                                <div style={{fontWeight:'600',fontSize:'14px'}}>#{a.itemNumber} {a.name}</div>
+                                                <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginTop:'3px'}}>{a.site} · {a.location} · Due: {a.maintenance?.nextDue}</div>
+                                                <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>{a.maintenance?.type} · {a.maintenance?.frequency}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {overdueItems.length === 0 && dueSoonItems.length === 0 && (
+                                    <div style={{textAlign:'center',padding:'40px 20px',color:'rgba(255,255,255,0.4)'}}>
+                                        <div style={{fontSize:'48px',marginBottom:'12px'}}>✅</div>
+                                        <div>All maintenance is up to date!</div>
+                                    </div>
+                                )}
+
+                                <button className="btn btn-secondary" style={{width:'100%',marginTop:'10px'}} onClick={() => setShowMaintenanceDashboard(false)}>Close</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Compact Numbers Modal */}
+                    {showCompactModal && (
+                        <div className="modal" onClick={() => setShowCompactModal(false)}>
+                            <div className="modal-content" onClick={e => e.stopPropagation()} style={{maxWidth: '500px'}}>
+                                <div className="modal-header">
+                                    <h2 className="modal-title">Compact Item Numbers</h2>
+                                    <button className="close-btn" onClick={() => setShowCompactModal(false)}>×</button>
+                                </div>
+                                <div style={{padding: '20px'}}>
+                                    <p style={{marginBottom: '15px'}}>
+                                        <strong>Compact Numbers</strong> removes gaps in the item number sequence by renumbering all items sequentially (1, 2, 3…).
+                                    </p>
+                                    <p style={{marginBottom: '10px', color: 'rgba(255,255,255,0.6)', fontSize:'13px'}}>
+                                        Example: If you have items #1, #2, #5, #9 — after compacting they become #1, #2, #3, #4. Use this after deleting items to tidy up the numbering.
+                                    </p>
+                                    <p style={{marginBottom: '20px', color: '#e63946'}}>
+                                        <strong>Warning:</strong> This will change item numbers for {artifacts.length} items. This action cannot be undone.
+                                    </p>
+                                    <div style={{display: 'flex', gap: '10px'}}>
+                                        <button className="btn" onClick={compactNumbers} style={{flex: 1}}>
+                                            ✓ Compact Numbers
+                                        </button>
+                                        <button className="btn btn-secondary" onClick={() => setShowCompactModal(false)} style={{flex: 1}}>
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
